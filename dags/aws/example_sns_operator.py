@@ -18,8 +18,8 @@ import os
 
 import pendulum
 from airflow import DAG
-from airflow.models import Variable
 from airflow.providers.amazon.aws.operators.sns import SnsPublishOperator
+from airflow.sdk import Variable
 
 dag_id = os.path.basename(__file__).replace(".py", "")
 
@@ -35,7 +35,7 @@ with DAG(
 ) as dag:
     config = Variable.get("aws", deserialize_json=True)
     target_arn = config["sns"]["topic_arn"]
-    publish = SnsPublishOperator(
+    publish_test_topic = SnsPublishOperator(
         task_id="publish_test_topic",
         target_arn=target_arn,
         message="TEST",

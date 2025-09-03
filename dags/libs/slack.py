@@ -3,7 +3,7 @@ from functools import wraps
 
 import requests
 from airflow import DAG
-from airflow.models import Variable
+from airflow.sdk import Variable
 
 
 @dataclass
@@ -22,9 +22,7 @@ def post_to_slack(func):
         requests.post(
             config.get("webhook_url"),
             json={
-                "blocks": [
-                    {"type": "section", "text": {"type": "mrkdwn", "text": c.text}}
-                ],
+                "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": c.text}}],
                 "attachments": [
                     {
                         "color": c.color,
@@ -46,17 +44,15 @@ def post_to_slack(func):
 def post_sla_miss_to_slack(
     dag: DAG, task_list: str, blocking_task_list: str, slas: list, blocking_tis: list
 ) -> SlackMessageConfig:
-
     return SlackMessageConfig(
         "#ffa500",
         f"@channel SLA was missed on {dag.dag_id}.\n",
-        f"Task ID: {slas[0].task_id}\n" f"TaskInstance ID: {blocking_tis[0]}\n",
+        f"Task ID: {slas[0].task_id}\nTaskInstance ID: {blocking_tis[0]}\n",
     )
 
 
 @post_to_slack
 def post_failure_to_slack(context: dict) -> SlackMessageConfig:
-
     return SlackMessageConfig(
         "#ff0000",
         f"@channel Task has failed on {context.get('task_instance').dag_id}.\n",

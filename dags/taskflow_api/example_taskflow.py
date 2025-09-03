@@ -18,7 +18,7 @@
 import json
 
 import pendulum
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 
 
 # 1. Define a dag using the @dag decorator

@@ -19,8 +19,8 @@ import os
 
 import pendulum
 from airflow import DAG
-from airflow.operators.bash import BashOperator
-from airflow.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.bash import BashOperator
+from airflow.providers.standard.operators.empty import EmptyOperator
 
 dag_id = os.path.basename(__file__).replace(".py", "")
 
@@ -32,13 +32,11 @@ with DAG(
 ) as dag:
     start = EmptyOperator(task_id="start")
 
-    t1 = BashOperator.partial(task_id="dtm_task").expand(
-        bash_command=["echo 1", "echo 2"]
-    )
+    dtm_task = BashOperator.partial(task_id="dtm_task").expand(bash_command=["echo 1", "echo 2"])
 
     # This task will be skipped.
-    t2 = BashOperator.partial(task_id="dtm_skip_task").expand(bash_command=[])
+    dtm_skip_task = BashOperator.partial(task_id="dtm_skip_task").expand(bash_command=[])
 
     end = EmptyOperator(task_id="end", trigger_rule="none_failed")
 
-    start >> t1 >> t2 >> end
+    start >> dtm_task >> dtm_skip_task >> end

@@ -18,7 +18,7 @@
 
 import pendulum
 from airflow import DAG
-from airflow.decorators import task
+from airflow.sdk import task
 from airflow.timetables.trigger import CronTriggerTimetable
 
 with DAG(
@@ -28,6 +28,7 @@ with DAG(
     catchup=False,
     tags=["time_table"],
 ):
+
     @task
     def print_date(date):
         print("date: ", date)
@@ -41,7 +42,4 @@ with DAG(
         print("data_interval_end: ", end)
 
     # The value of data_interval_start and data_interval_end will be the same, which is the date of dag execution
-    print_data_interval(
-        "{{ data_interval_start | ds }}",
-        "{{ data_interval_start | ds }}"
-    )
+    print_data_interval("{{ data_interval_start | ds }}", "{{ data_interval_start | ds }}")

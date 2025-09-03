@@ -19,7 +19,7 @@ import os
 
 import pendulum
 from airflow import DAG
-from airflow.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.task_group import TaskGroup
 
 dag_id = os.path.basename(__file__).replace(".py", "")
@@ -33,22 +33,22 @@ with DAG(
     start = EmptyOperator(task_id="start")
 
     with TaskGroup(group_id="group1") as tg1:
-        t1 = EmptyOperator(task_id="task1")
+        task1 = EmptyOperator(task_id="task1")
 
         # Define sub task group
         with TaskGroup(group_id="group1_1") as tg1_1:
-            t2 = EmptyOperator(task_id="task2")
-            t3 = EmptyOperator(task_id="task3")
+            task2 = EmptyOperator(task_id="task2")
+            task3 = EmptyOperator(task_id="task3")
 
-            t2 >> t3
+            task2 >> task3
 
         with TaskGroup(group_id="group1_2") as tg1_2:
             for i in range(1, 3):
                 tn = EmptyOperator(task_id=f"task_tg1_2_{i}")
 
-            t3 >> tn
+            task3 >> tn
 
-        t1 >> tg1_1 >> tg1_2
+        task1 >> tg1_1 >> tg1_2
 
     end = EmptyOperator(task_id="end")
 

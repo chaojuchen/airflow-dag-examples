@@ -17,41 +17,41 @@
 # under the License.
 
 import pendulum
-from airflow import DAG, Dataset
-from airflow.operators.bash import BashOperator
-from airflow.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.bash import BashOperator
+from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.sdk import DAG, Asset
 
-example_dataset1 = Dataset("s3://dataset1/or.csv")
-example_dataset2 = Dataset("s3://dataset2/or.csv")
+example_asset1 = Asset("s3://dataset1/or.csv")
+example_asset2 = Asset("s3://dataset2/or.csv")
 
 with DAG(
     dag_id="example_dataset_producer_with_or_condition",
     start_date=pendulum.datetime(2024, 11, 1, tz="UTC"),
     schedule=None,
-    tags=["dataset"],
+    tags=["asset"],
 ):
-    # `example_dataset1` may be updated by this upstream producer task.
-    t1 = BashOperator(
+    # `example_asset1` may be updated by this upstream producer task.
+    wait5 = BashOperator(
         task_id="wait5",
         bash_command="sleep 5",
-        outlets=[example_dataset1],
+        outlets=[example_asset1],
     )
 
     # `example_dataset_consumer_with_or_condition` DAG is executed before this `wait15` task is completed.
-    t2 = BashOperator(
+    wait15 = BashOperator(
         task_id="wait15",
         bash_command="sleep 15",
-        outlets=[example_dataset2],
+        outlets=[example_asset2],
     )
 
-    t1 >> t2
+    wait5 >> wait15
 
 
 # This DAG is triggered when `wait5` task of `example_producer` DAG is completed successfully.
 with DAG(
     dag_id="example_dataset_consumer_with_or_condition",
     start_date=pendulum.datetime(2024, 11, 1, tz="UTC"),
-    schedule=(example_dataset1 | example_dataset2),
-    tags=["dataset"],
+    schedule=(example_asset1 | example_asset2),
+    tags=["asset"],
 ):
     EmptyOperator(task_id="consumer")

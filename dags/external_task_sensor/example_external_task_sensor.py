@@ -19,10 +19,10 @@
 import pendulum
 from airflow import DAG
 from airflow.models.dag import get_last_dagrun
-from airflow.operators.bash import BashOperator
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from airflow.sensors.external_task import ExternalTaskSensor
+from airflow.providers.standard.operators.bash import BashOperator
+from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.providers.standard.sensors.external_task import ExternalTaskSensor
 from airflow.utils.session import provide_session
 
 with DAG(
@@ -36,9 +36,7 @@ with DAG(
     @provide_session
     def _get_logical_date_of_external_dag(logical_date, session):
         dag_last_run = get_last_dagrun(
-            dag_id="example_external_task_sensor_target",
-            session=session,
-            include_externally_triggered=True
+            dag_id="example_external_task_sensor_target", session=session, include_externally_triggered=True
         )
         return dag_last_run.logical_date
 

@@ -19,7 +19,7 @@ import datetime
 import time
 
 import pendulum
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from libs.slack import post_sla_miss_to_slack
 
 
