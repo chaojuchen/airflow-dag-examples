@@ -24,7 +24,7 @@ from airflow.sdk import DAG, Asset
 example_asset = Asset("s3://dataset/example.csv")
 
 with DAG(
-    dag_id="example_dataset_producer",
+    dag_id="example_dataset_producer2",
     start_date=pendulum.datetime(2023, 3, 1, tz="UTC"),
     schedule=None,
     tags=["asset"],
@@ -44,9 +44,9 @@ with DAG(
     producer >> wait
 
 
-# This DAG is triggered when `producer` task of `example_dataset_producer` DAG is completed successfully.
+# This DAG is triggered when `producer` task of `example_dataset_producer2` DAG is completed successfully.
 with DAG(
-    dag_id="example_dataset_consumer",
+    dag_id="example_dataset_consumer_2",
     start_date=pendulum.datetime(2023, 3, 1, tz="UTC"),
     schedule=[example_asset],  # DAG can also require multiple assets. e.g., [asset1, asset2]
     tags=["asset"],
