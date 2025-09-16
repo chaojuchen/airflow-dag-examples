@@ -9,14 +9,14 @@ def test_postgres_conn():
     
     conn_str = f"host={conn.host} port={conn.port or 5432} dbname={conn.schema} user={conn.login} password={conn.password}"
     print(f"Connecting to Postgres with connection string: {conn_str}")
-    with conn.cursor() as cur:
-        try:
-            cur.execute("RESET ALL;")
-        except Exception as e:
-            print(f"RESET ALL failed: {e}")
-        cur.execute("SELECT 1;")
-        print(cur.fetchone())
-        #query = "SELECT count(*) FROM ducklake.main.click_events;"
+    with psycopg2.connect(conn_str) as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("RESET ALL;")
+            except Exception as e:
+                print(f"RESET ALL failed: {e}")
+            cur.execute("SELECT 1;")
+            print(cur.fetchone())
 
 with DAG(
     dag_id="test_postgres_conn_dag",
