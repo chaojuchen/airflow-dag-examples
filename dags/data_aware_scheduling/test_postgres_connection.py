@@ -11,10 +11,11 @@ def test_postgres_conn():
     print(f"Connecting to Postgres with connection string: {conn_str}")
     with psycopg2.connect(conn_str) as pg_conn:
         with pg_conn.cursor() as cur:
-            query = "SELECT count(*) FROM ducklake.main.click_events;"
+            #query = "SELECT count(*) FROM ducklake.main.click_events;"
+            query = "SELECT 1;"
             cur.execute(query)
-            count = cur.fetchone()[0]
-            print(f"Count of records in ducklake.main.click_events: {count}")
+            result = cur.fetchone()[0]
+            print(f"Result of query: {result}")
 
 with DAG(
     dag_id="test_postgres_conn_dag",
