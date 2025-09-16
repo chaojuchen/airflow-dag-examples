@@ -16,7 +16,7 @@ def test_postgres_conn():
 with DAG(
     dag_id="test_postgres_conn_dag",
     start_date=datetime.now() - timedelta(days=1),   # dynamic start date: yesterday
-    schedule_interval="* * * * *",                  # every minute
+    schedule="* * * * *",                  # every minute
     catchup=False,
     tags=["test"],
 ) as dag:
