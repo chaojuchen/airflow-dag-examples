@@ -11,10 +11,6 @@ def test_postgres_conn():
     print(f"Connecting to Postgres with connection string: {conn_str}")
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
-            try:
-                cur.execute("RESET ALL;")
-            except Exception as e:
-                print(f"RESET ALL failed: {e}")
             cur.execute("SELECT 1;")
             print(cur.fetchone())
 
