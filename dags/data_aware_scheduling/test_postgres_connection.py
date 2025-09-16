@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import psycopg2
 
 def test_postgres_conn():
-    conn = BaseHook.get_connection("sqlmesh_postgres")
+    conn = BaseHook.get_connection("tangram_sql")
     conn_str = f"host={conn.host} port={conn.port or 5432} dbname={conn.schema} user={conn.login} password={conn.password}"
     with psycopg2.connect(conn_str) as pg_conn:
         with pg_conn.cursor() as cur:
