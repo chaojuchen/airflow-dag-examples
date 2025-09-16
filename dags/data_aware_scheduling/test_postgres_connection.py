@@ -9,9 +9,10 @@ def test_postgres_conn():
     conn_str = f"host={conn.host} port={conn.port or 5432} dbname={conn.schema} user={conn.login} password={conn.password}"
     with psycopg2.connect(conn_str) as pg_conn:
         with pg_conn.cursor() as cur:
-            cur.execute("SELECT version();")
-            version = cur.fetchone()
-            print("Postgres version:", version)
+            query = """SELECT count(*) FROM ducklake.main.click_events;"""
+            cur.execute(query)
+            count = cur.fetchone()[0]
+            print(f"Count of records in ducklake.main.click_events: {count}")
 
 with DAG(
     dag_id="test_postgres_conn_dag",
