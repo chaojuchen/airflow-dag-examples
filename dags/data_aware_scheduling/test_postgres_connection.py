@@ -6,7 +6,11 @@ import psycopg2
 
 def test_postgres_conn():
     conn = BaseHook.get_connection("tangram_sql")
+    
+    from pprint import pprint
+    pprint(dir(conn))
     conn_str = f"host={conn.host} port={conn.port or 5432} dbname={conn.schema} user={conn.login} password={conn.password}"
+    print(f"Connecting to Postgres with connection string: {conn_str}")
     with psycopg2.connect(conn_str) as pg_conn:
         with pg_conn.cursor() as cur:
             query = """SELECT count(*) FROM ducklake.main.click_events;"""
