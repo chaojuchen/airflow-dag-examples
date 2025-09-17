@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from datetime import datetime
 
 default_args = {
@@ -7,33 +7,33 @@ default_args = {
 }
 
 with DAG(
-    dag_id='nyc_monday_zone_earnings_postgres',
+    dag_id='nyc_monday_zone_earnings',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
-    tags=["nyc", "postgres", "sql"]
+    tags=["nyc", "sql", "generic"]
 ) as dag:
 
-    # Step 1: Filter for Mondays (creates a temporary table)
-    monday_rides = PostgresOperator(
-        task_id='create_monday_rides_table',
-        postgres_conn_id='tangram_sql',
+    # Step 1: Create a view for Monday rides
+    monday_rides_view = SQLExecuteQueryOperator(
+        task_id='create_monday_rides_view',
+        conn_id='tangram_sql',
         sql="""
-        DROP TABLE IF EXISTS monday_rides;
-        CREATE TEMP TABLE monday_rides AS
+        DROP VIEW IF EXISTS monday_rides;
+        CREATE VIEW monday_rides AS
         SELECT *
         FROM nyc_yellow_taxi_trips
         WHERE EXTRACT(DOW FROM tpep_pickup_datetime) = 1;
         """,
     )
 
-    # Step 2: Calculate earnings by zone (creates a temporary table)
-    zone_earnings = PostgresOperator(
-        task_id='create_zone_earnings_table',
-        postgres_conn_id='tangram_sql',
+    # Step 2: Create a view for earnings by zone
+    zone_earnings_view = SQLExecuteQueryOperator(
+        task_id='create_zone_earnings_view',
+        conn_id='tangram_sql',
         sql="""
-        DROP TABLE IF EXISTS zone_earnings;
-        CREATE TEMP TABLE zone_earnings AS
+        DROP VIEW IF EXISTS zone_earnings;
+        CREATE VIEW zone_earnings AS
         SELECT 
             PULocationID,
             COUNT(*) AS num_trips,
@@ -45,9 +45,9 @@ with DAG(
     )
 
     # Step 3: Join with zone names and return the top 10 zones
-    top_10_zones_query = PostgresOperator(
+    top_10_zones_query = SQLExecuteQueryOperator(
         task_id='get_top_10_zones',
-        postgres_conn_id='tangram_sql',
+        conn_id='tangram_sql',
         sql="""
         SELECT 
             z.PULocationID,
@@ -64,4 +64,4 @@ with DAG(
         """,
     )
 
-    monday_rides >> zone_earnings >> top_10_zones_query
+    monday_rides_view >> zone_earnings_view >> top_10_zones_query
