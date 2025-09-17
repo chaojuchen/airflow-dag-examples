@@ -17,7 +17,7 @@ def test_postgres_conn():
 with DAG(
     dag_id="test_postgres_conn_dag",
     start_date=datetime(2025, 9, 15),
-    schedule="* * * * *",                  # every minute
+    schedule="0 * * * *",                  # every hour
     catchup=False,
     tags=["test"],
 ) as dag:
