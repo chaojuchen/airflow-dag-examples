@@ -20,7 +20,6 @@ with DAG(
         task_id='create_day_rides_table',
         conn_id='tangram_sql',
         sql="""
-        DROP TABLE IF EXISTS iceberg.demo.day_rides;
         CREATE TABLE iceberg.demo.day_rides AS
         SELECT *
         FROM iceberg.demo.nyc_yellow_taxi_trips
@@ -33,7 +32,6 @@ with DAG(
         task_id='create_zone_earnings_table',
         conn_id='tangram_sql',
         sql="""
-        DROP TABLE IF EXISTS iceberg.demo.zone_earnings;
         CREATE TABLE iceberg.demo.zone_earnings AS
         SELECT 
             PULocationID,
@@ -50,7 +48,6 @@ with DAG(
         task_id='create_day_driving_time_distance_table',
         conn_id='tangram_sql',
         sql="""
-        DROP TABLE IF EXISTS iceberg.demo.day_driving_time_distance;
         CREATE TABLE iceberg.demo.day_driving_time_distance AS
         SELECT
             PULocationID,
