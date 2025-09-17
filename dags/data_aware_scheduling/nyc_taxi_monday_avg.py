@@ -16,12 +16,12 @@ with DAG(
 ) as dag:
 
     # Create a view for rides on the specified day of week
-    create_day_rides_view = SQLExecuteQueryOperator(
-        task_id='create_day_rides_view',
+    create_day_rides_table = SQLExecuteQueryOperator(
+        task_id='create_day_rides_table',
         conn_id='tangram_sql',
         sql="""
-        DROP VIEW IF EXISTS iceberg.demo.day_rides;
-        CREATE VIEW iceberg.demo.day_rides AS
+        DROP TABLE IF EXISTS iceberg.demo.day_rides;
+        CREATE TABLE iceberg.demo.day_rides AS
         SELECT *
         FROM iceberg.demo.nyc_yellow_taxi_trips
         WHERE EXTRACT(DOW FROM tpep_pickup_datetime) = {{ params.day_of_week }};
@@ -29,12 +29,12 @@ with DAG(
     )
 
     # Create a view for earnings by zone
-    zone_earnings_view = SQLExecuteQueryOperator(
-        task_id='create_zone_earnings_view',
+    zone_earnings_table = SQLExecuteQueryOperator(
+        task_id='create_zone_earnings_table',
         conn_id='tangram_sql',
         sql="""
-        DROP VIEW IF EXISTS iceberg.demo.zone_earnings;
-        CREATE VIEW iceberg.demo.zone_earnings AS
+        DROP TABLE IF EXISTS iceberg.demo.zone_earnings;
+        CREATE TABLE iceberg.demo.zone_earnings AS
         SELECT 
             PULocationID,
             COUNT(*) AS num_trips,
@@ -46,12 +46,12 @@ with DAG(
     )
 
     # Branch: Calculate total driving time and distance for the day
-    driving_time_distance_view = SQLExecuteQueryOperator(
-        task_id='create_day_driving_time_distance_view',
+    driving_time_distance_table = SQLExecuteQueryOperator(
+        task_id='create_day_driving_time_distance_table',
         conn_id='tangram_sql',
         sql="""
-        DROP VIEW IF EXISTS iceberg.demo.day_driving_time_distance;
-        CREATE VIEW iceberg.demo.day_driving_time_distance AS
+        DROP TABLE IF EXISTS iceberg.demo.day_driving_time_distance;
+        CREATE TABLE iceberg.demo.day_driving_time_distance AS
         SELECT
             PULocationID,
             DOLocationID,
@@ -85,5 +85,5 @@ with DAG(
         """,
     )
 
-    create_day_rides_view >> [zone_earnings_view, driving_time_distance_view]
-    zone_earnings_view >> top_10_zones_query
+    create_day_rides_table >> [zone_earnings_table, driving_time_distance_table]
+    zone_earnings_table >> top_10_zones_query
