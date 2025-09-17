@@ -9,7 +9,7 @@ default_args = {
 with DAG(
     dag_id='nyc_monday_zone_earnings',
     default_args=default_args,
-    schedule_interval=None,
+    schedule=None,
     catchup=False,
     tags=["nyc", "sql", "generic"]
 ) as dag:
@@ -19,10 +19,10 @@ with DAG(
         task_id='create_monday_rides_view',
         conn_id='tangram_sql',
         sql="""
-        DROP VIEW IF EXISTS monday_rides;
-        CREATE VIEW monday_rides AS
+        DROP VIEW IF EXISTS iceberg.demo.monday_rides;
+        CREATE VIEW iceberg.demo.monday_rides AS
         SELECT *
-        FROM nyc_yellow_taxi_trips
+        FROM iceberg.demo.nyc_yellow_taxi_trips
         WHERE EXTRACT(DOW FROM tpep_pickup_datetime) = 1;
         """,
     )
@@ -32,14 +32,14 @@ with DAG(
         task_id='create_zone_earnings_view',
         conn_id='tangram_sql',
         sql="""
-        DROP VIEW IF EXISTS zone_earnings;
-        CREATE VIEW zone_earnings AS
+        DROP VIEW IF EXISTS iceberg.demo.zone_earnings;
+        CREATE VIEW iceberg.demo.zone_earnings AS
         SELECT 
             PULocationID,
             COUNT(*) AS num_trips,
             SUM(total_amount) AS total_earnings,
             AVG(total_amount) AS avg_earnings_per_trip
-        FROM monday_rides
+        FROM iceberg.demo.monday_rides
         GROUP BY PULocationID;
         """,
     )
@@ -56,8 +56,8 @@ with DAG(
             z.num_trips,
             z.total_earnings,
             z.avg_earnings_per_trip
-        FROM zone_earnings z
-        JOIN taxi_zone_lookup l
+        FROM iceberg.demo.zone_earnings z
+        JOIN iceberg.demo.taxi_zone_lookup l
           ON z.PULocationID = l.LocationID
         ORDER BY z.total_earnings DESC
         LIMIT 10;
