@@ -38,7 +38,7 @@ with DAG(
         task_id='create_day_rides_table',
         conn_id='tangram_sql',
         sql="""
-        CREATE TABLE iceberg.demo.day_rides AS
+        CREATE TABLE IF NOT EXISTS iceberg.demo.day_rides AS
         SELECT *
         FROM iceberg.demo.nyc_yellow_taxi_trips
         WHERE EXTRACT(DOW FROM tpep_pickup_datetime) = {{ params.day_of_week }};
@@ -50,7 +50,7 @@ with DAG(
         task_id='create_zone_earnings_table',
         conn_id='tangram_sql',
         sql="""
-        CREATE TABLE iceberg.demo.zone_earnings AS
+        CREATE TABLE IF NOT EXISTS iceberg.demo.zone_earnings AS
         SELECT 
             PULocationID,
             COUNT(*) AS num_trips,
@@ -65,7 +65,7 @@ with DAG(
         task_id='create_zone_driving_stats_table',
         conn_id='tangram_sql',
         sql="""
-        CREATE TABLE iceberg.demo.zone_driving_stats (
+        CREATE TABLE IF NOT EXISTS iceberg.demo.zone_driving_stats (
             PULocationID INT,
             zone STRING,
             num_trips BIGINT,
