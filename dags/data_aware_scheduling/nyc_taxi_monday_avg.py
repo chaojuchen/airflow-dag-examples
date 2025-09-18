@@ -14,23 +14,23 @@ with DAG(
     tags=["nyc", "sql", "generic"],
     params={"day_of_week": 1},  # Default: 1=Monday, override when triggering DAG
 ) as dag:
-    # cleanup_day_rides = SQLExecuteQueryOperator(
-    #     task_id='cleanup_day_rides',
-    #     conn_id='tangram_sql',
-    #     sql="DROP TABLE IF EXISTS iceberg.demo.day_rides;",
-    # )
+    cleanup_day_rides = SQLExecuteQueryOperator(
+        task_id='cleanup_day_rides',
+        conn_id='tangram_sql',
+        sql="DROP TABLE IF EXISTS iceberg.demo.day_rides;",
+    )
 
-    # cleanup_zone_earnings = SQLExecuteQueryOperator(
-    #     task_id='cleanup_zone_earnings',
-    #     conn_id='tangram_sql',
-    #     sql="DROP TABLE IF EXISTS iceberg.demo.zone_earnings;",
-    # )
+    cleanup_zone_earnings = SQLExecuteQueryOperator(
+        task_id='cleanup_zone_earnings',
+        conn_id='tangram_sql',
+        sql="DROP TABLE IF EXISTS iceberg.demo.zone_earnings;",
+    )
 
-    # cleanup_driving_stats = SQLExecuteQueryOperator(
-    #     task_id='cleanup_driving_stats',
-    #     conn_id='tangram_sql',
-    #     sql="DROP TABLE IF EXISTS iceberg.demo.day_driving_time_distance;",
-    # )
+    cleanup_zone_driving_stats = SQLExecuteQueryOperator(
+        task_id='cleanup_zone_driving_stats',
+        conn_id='tangram_sql',
+        sql="DROP TABLE IF EXISTS iceberg.demo.zone_driving_stats;",
+    )
 
 
     # Create a view for rides on the specified day of week
@@ -51,14 +51,14 @@ with DAG(
         conn_id='tangram_sql',
         sql="""
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_earnings AS
-        SELECT 
+        SELECT
+            day_of_week
             PULocationID,
             COUNT(*) AS num_trips,
-            {{ params.day_of_week }} as day_of_week,
             SUM(total_amount) AS total_earnings,
-            AVG(total_amount) AS avg_earnings_per_trip,
+            AVG(total_amount) AS avg_earnings_per_trip
         FROM iceberg.demo.day_rides
-        GROUP BY PULocationID;
+        GROUP BY day_of_week, PULocationID;
         """,
     )
 
