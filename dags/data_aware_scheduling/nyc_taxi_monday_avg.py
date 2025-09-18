@@ -14,23 +14,23 @@ with DAG(
     tags=["nyc", "sql", "generic"],
     params={"day_of_week": 1},  # Default: 1=Monday, override when triggering DAG
 ) as dag:
-    # cleanup_day_rides = SQLExecuteQueryOperator(
-    #     task_id='cleanup_day_rides',
-    #     conn_id='tangram_sql',
-    #     sql="DROP TABLE IF EXISTS iceberg.demo.day_rides;",
-    # )
+    cleanup_day_rides = SQLExecuteQueryOperator(
+        task_id='cleanup_day_rides',
+        conn_id='tangram_sql',
+        sql="DROP TABLE IF EXISTS iceberg.demo.day_rides;",
+    )
 
-    # cleanup_zone_earnings = SQLExecuteQueryOperator(
-    #     task_id='cleanup_zone_earnings',
-    #     conn_id='tangram_sql',
-    #     sql="DROP TABLE IF EXISTS iceberg.demo.zone_earnings;",
-    # )
+    cleanup_zone_earnings = SQLExecuteQueryOperator(
+        task_id='cleanup_zone_earnings',
+        conn_id='tangram_sql',
+        sql="DROP TABLE IF EXISTS iceberg.demo.zone_earnings;",
+    )
 
-    # cleanup_zone_driving_stats = SQLExecuteQueryOperator(
-    #     task_id='cleanup_zone_driving_stats',
-    #     conn_id='tangram_sql',
-    #     sql="DROP TABLE IF EXISTS iceberg.demo.zone_driving_stats;",
-    # )
+    cleanup_zone_driving_stats = SQLExecuteQueryOperator(
+        task_id='cleanup_zone_driving_stats',
+        conn_id='tangram_sql',
+        sql="DROP TABLE IF EXISTS iceberg.demo.zone_driving_stats;",
+    )
 
 
     # Create a view for rides on the specified day of week
@@ -52,7 +52,7 @@ with DAG(
         sql="""
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_earnings AS
         SELECT
-            day_of_week
+            day_of_week,
             PULocationID,
             COUNT(*) AS num_trips,
             SUM(total_amount) AS total_earnings,
@@ -117,6 +117,6 @@ with DAG(
         """,
     )
 
-    # [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats] >> 
-    create_day_rides_table >> zone_earnings_table >> top_10_zones_query
-    create_day_rides_table >> create_zone_driving_stats_table >> calculate_zone_driving_metrics
+    [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats] >> create_day_rides_table >> [zone_earnings_table, create_zone_driving_stats_table]
+    zone_earnings_table >> top_10_zones_query
+    create_zone_driving_stats_table >> calculate_zone_driving_metrics
