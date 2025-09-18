@@ -39,7 +39,7 @@ with DAG(
         conn_id='tangram_sql',
         sql="""
         CREATE TABLE IF NOT EXISTS iceberg.demo.day_rides AS
-        SELECT *
+        SELECT *, {{ params.day_of_week }} as day_of_week
         FROM iceberg.demo.nyc_yellow_taxi_trips
         WHERE EXTRACT(DOW FROM tpep_pickup_datetime) = {{ params.day_of_week }};
         """,
@@ -54,8 +54,9 @@ with DAG(
         SELECT 
             PULocationID,
             COUNT(*) AS num_trips,
+            {{ params.day_of_week }} as day_of_week,
             SUM(total_amount) AS total_earnings,
-            AVG(total_amount) AS avg_earnings_per_trip
+            AVG(total_amount) AS avg_earnings_per_trip,
         FROM iceberg.demo.day_rides
         GROUP BY PULocationID;
         """,
@@ -66,6 +67,7 @@ with DAG(
         conn_id='tangram_sql',
         sql="""
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_driving_stats (
+            {{ params.day_of_week }} as day_of_week,
             PULocationID INT,
             zone STRING,
             num_trips BIGINT,
@@ -82,7 +84,8 @@ with DAG(
         sql="""
         INSERT INTO iceberg.demo.zone_driving_stats
         SELECT
-            PULocationID,
+            dr.day_of_week,
+            dr.PULocationID,
             l.zone,
             COUNT(*) AS num_trips,
             AVG(trip_distance) AS avg_distance_per_trip,
@@ -90,7 +93,7 @@ with DAG(
         FROM iceberg.demo.day_rides dr
         JOIN iceberg.demo.taxi_zone_lookup l
           ON dr.PULocationID = l.LocationID
-        GROUP BY PULocationID, l.zone;
+        GROUP BY dr.day_of_week, dr.PULocationID, l.zone;
         """,
     )
 
