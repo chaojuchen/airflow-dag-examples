@@ -89,7 +89,7 @@ with DAG(
             l.zone,
             COUNT(*) AS num_trips,
             AVG(trip_distance) AS avg_distance_per_trip,
-            AVG(tpep_dropoff_datetime - tpep_pickup_datetime) / 60.0 AS avg_driving_time_minutes
+            AVG(DATE_DIFF('second', tpep_pickup_datetime, tpep_dropoff_datetime)) / 60.0 AS avg_driving_time_minutes
         FROM iceberg.demo.day_rides dr
         JOIN iceberg.demo.taxi_zone_lookup l
           ON dr.PULocationID = l.LocationID
