@@ -38,6 +38,7 @@ with DAG(
         task_id='create_day_rides_table',
         conn_id='tangram_sql',
         sql="""
+        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{tangram_workspace}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         CREATE TABLE IF NOT EXISTS iceberg.demo.day_rides AS
         SELECT *, {{ params.day_of_week }} as day_of_week
         FROM iceberg.demo.nyc_yellow_taxi_trips
@@ -50,6 +51,7 @@ with DAG(
         task_id='create_zone_earnings_table',
         conn_id='tangram_sql',
         sql="""
+        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{tangram_workspace}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_earnings AS
         SELECT
             day_of_week,
@@ -66,6 +68,7 @@ with DAG(
         task_id='create_zone_driving_stats_table',
         conn_id='tangram_sql',
         sql="""
+        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{tangram_workspace}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_driving_stats (
             day_of_week INT,
             PULocationID INT,
@@ -82,6 +85,7 @@ with DAG(
         task_id='calculate_zone_driving_metrics',
         conn_id='tangram_sql',
         sql="""
+        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{tangram_workspace}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         INSERT INTO iceberg.demo.zone_driving_stats
         SELECT
             dr.day_of_week,
@@ -102,6 +106,7 @@ with DAG(
         task_id='get_top_10_zones',
         conn_id='tangram_sql',
         sql="""
+        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{tangram_workspace}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         SELECT 
             z.PULocationID,
             l.Zone,
