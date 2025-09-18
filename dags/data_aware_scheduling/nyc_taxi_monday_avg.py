@@ -61,18 +61,32 @@ with DAG(
         """,
     )
 
-    # Branch: Calculate total driving time and distance for the day
-    driving_time_distance_table = SQLExecuteQueryOperator(
-        task_id='create_day_driving_time_distance_table',
+    create_zone_driving_stats_table = SQLExecuteQueryOperator(
+        task_id='create_zone_driving_stats_table',
         conn_id='tangram_sql',
         sql="""
-        CREATE TABLE iceberg.demo.day_driving_time_distance AS
+        CREATE TABLE iceberg.demo.zone_driving_stats (
+            PULocationID INT,
+            zone STRING,
+            num_trips BIGINT,
+            avg_distance_per_trip DOUBLE,
+            avg_driving_time_minutes DOUBLE
+        );
+        """
+    )
+
+    # Branch: Calculate total driving time and distance for the day
+    calculate_zone_driving_metrics = SQLExecuteQueryOperator(
+        task_id='calculate_zone_driving_metrics',
+        conn_id='tangram_sql',
+        sql="""
+        INSERT INTO iceberg.demo.zone_driving_stats
         SELECT
             PULocationID,
             l.zone,
             COUNT(*) AS num_trips,
             AVG(trip_distance) AS avg_distance_per_trip,
-            AVG(tpep_dropoff_datetime - tpep_pickup_datetime) AS avg_driving_time_seconds
+            AVG(tpep_dropoff_datetime - tpep_pickup_datetime) / 60.0 AS avg_driving_time_minutes
         FROM iceberg.demo.day_rides dr
         JOIN iceberg.demo.taxi_zone_lookup l
           ON dr.PULocationID = l.LocationID
@@ -101,5 +115,5 @@ with DAG(
     )
 
     # [cleanup_day_rides, cleanup_zone_earnings, cleanup_driving_stats] >> 
-    create_day_rides_table >> [zone_earnings_table, driving_time_distance_table]
+    create_day_rides_table >> [zone_earnings_table, create_zone_driving_stats_table] >> calculate_zone_driving_metrics >>
     zone_earnings_table >> top_10_zones_query
