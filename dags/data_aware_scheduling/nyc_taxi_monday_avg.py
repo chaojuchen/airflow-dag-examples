@@ -14,7 +14,6 @@ with DAG(
     tags=["nyc", "sql", "generic"],
     params={"day_of_week": 1},  # Default: 1=Monday, override when triggering DAG
 ) as dag:
-
     # Create a view for rides on the specified day of week
     create_day_rides_table = SQLExecuteQueryOperator(
         task_id='create_day_rides_table',
@@ -51,14 +50,14 @@ with DAG(
         CREATE TABLE iceberg.demo.day_driving_time_distance AS
         SELECT
             PULocationID,
-            DOLocationID,
+            l.zone,
             COUNT(*) AS num_trips,
-            SUM(trip_distance) AS total_distance,
             AVG(trip_distance) AS avg_distance_per_trip,
-            SUM(EXTRACT(EPOCH FROM (tpep_dropoff_datetime - tpep_pickup_datetime))) AS total_driving_time_seconds,
-            AVG(EXTRACT(EPOCH FROM (tpep_dropoff_datetime - tpep_pickup_datetime))) AS avg_driving_time_seconds
-        FROM iceberg.demo.day_rides
-        GROUP BY PULocationID, DOLocationID;
+            AVG(tpep_dropoff_datetime - tpep_pickup_datetime) AS avg_driving_time_seconds
+        FROM iceberg.demo.day_rides dr
+        JOIN iceberg.demo.taxi_zone_lookup l
+          ON dr.PULocationID = l.LocationID
+        GROUP BY PULocationID, l.zone;
         """,
     )
 
