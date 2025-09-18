@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.utils.task_group import TaskGroup
 from datetime import datetime
 
 default_args = {
@@ -14,26 +15,25 @@ with DAG(
     tags=["nyc", "sql", "generic"],
     params={"day_of_week": 1},  # Default: 1=Monday, override when triggering DAG
 ) as dag:
-    cleanup_day_rides = SQLExecuteQueryOperator(
-        task_id='cleanup_day_rides',
-        conn_id='tangram_sql',
-        sql="DROP TABLE IF EXISTS iceberg.demo.day_rides;",
-    )
+    with TaskGroup("cleanup_tables") as cleanup_tables:
+        cleanup_day_rides = SQLExecuteQueryOperator(
+            task_id='cleanup_day_rides',
+            conn_id='tangram_sql',
+            sql="DROP TABLE IF EXISTS iceberg.demo.day_rides;",
+        )
 
-    cleanup_zone_earnings = SQLExecuteQueryOperator(
-        task_id='cleanup_zone_earnings',
-        conn_id='tangram_sql',
-        sql="DROP TABLE IF EXISTS iceberg.demo.zone_earnings;",
-    )
+        cleanup_zone_earnings = SQLExecuteQueryOperator(
+            task_id='cleanup_zone_earnings',
+            conn_id='tangram_sql',
+            sql="DROP TABLE IF EXISTS iceberg.demo.zone_earnings;",
+        )
 
-    cleanup_zone_driving_stats = SQLExecuteQueryOperator(
-        task_id='cleanup_zone_driving_stats',
-        conn_id='tangram_sql',
-        sql="DROP TABLE IF EXISTS iceberg.demo.zone_driving_stats;",
-    )
+        cleanup_zone_driving_stats = SQLExecuteQueryOperator(
+            task_id='cleanup_zone_driving_stats',
+            conn_id='tangram_sql',
+            sql="DROP TABLE IF EXISTS iceberg.demo.zone_driving_stats;",
+        )
 
-
-    # Create a view for rides on the specified day of week
     create_day_rides_table = SQLExecuteQueryOperator(
         task_id='create_day_rides_table',
         conn_id='tangram_sql',
@@ -45,14 +45,13 @@ with DAG(
         """,
     )
 
-    # Create a view for earnings by zone
     zone_earnings_table = SQLExecuteQueryOperator(
         task_id='create_zone_earnings_table',
         conn_id='tangram_sql',
         sql="""
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_earnings AS
         SELECT
-            day_of_week
+            day_of_week,
             PULocationID,
             COUNT(*) AS num_trips,
             SUM(total_amount) AS total_earnings,
@@ -77,7 +76,6 @@ with DAG(
         """
     )
 
-    # Branch: Calculate total driving time and distance for the day
     calculate_zone_driving_metrics = SQLExecuteQueryOperator(
         task_id='calculate_zone_driving_metrics',
         conn_id='tangram_sql',
@@ -89,7 +87,7 @@ with DAG(
             l.zone,
             COUNT(*) AS num_trips,
             AVG(trip_distance) AS avg_distance_per_trip,
-            AVG(tpep_dropoff_datetime - tpep_pickup_datetime) / 60.0 AS avg_driving_time_minutes
+            AVG((UNIX_TIMESTAMP(tpep_dropoff_datetime) - UNIX_TIMESTAMP(tpep_pickup_datetime))/60.0) AS avg_driving_time_minutes
         FROM iceberg.demo.day_rides dr
         JOIN iceberg.demo.taxi_zone_lookup l
           ON dr.PULocationID = l.LocationID
@@ -97,7 +95,6 @@ with DAG(
         """,
     )
 
-    # Join with zone names and return the top 10 zones
     top_10_zones_query = SQLExecuteQueryOperator(
         task_id='get_top_10_zones',
         conn_id='tangram_sql',
@@ -117,6 +114,8 @@ with DAG(
         """,
     )
 
-    # [cleanup_day_rides, cleanup_zone_earnings, cleanup_driving_stats] >> 
-    create_day_rides_table >> zone_earnings_table >> top_10_zones_query
-    create_day_rides_table >> create_zone_driving_stats_table >> calculate_zone_driving_metrics
+    # DAG dependencies
+    cleanup_tables >> create_day_rides_table
+    create_day_rides_table >> [zone_earnings_table, create_zone_driving_stats_table]
+    create_zone_driving_stats_table >> calculate_zone_driving_metrics
+    zone_earnings_table >> top_10_zones_query
