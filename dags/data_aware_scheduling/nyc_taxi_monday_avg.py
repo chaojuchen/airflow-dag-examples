@@ -67,7 +67,7 @@ with DAG(
         conn_id='tangram_sql',
         sql="""
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_driving_stats (
-            {{ params.day_of_week }} as day_of_week,
+            day_of_week INT,
             PULocationID INT,
             zone STRING,
             num_trips BIGINT,
