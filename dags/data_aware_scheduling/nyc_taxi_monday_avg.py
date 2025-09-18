@@ -14,6 +14,25 @@ with DAG(
     tags=["nyc", "sql", "generic"],
     params={"day_of_week": 1},  # Default: 1=Monday, override when triggering DAG
 ) as dag:
+    cleanup_day_rides = SQLExecuteQueryOperator(
+        task_id='cleanup_day_rides',
+        conn_id='tangram_sql',
+        sql="DROP TABLE IF EXISTS iceberg.demo.day_rides;",
+    )
+
+    cleanup_zone_earnings = SQLExecuteQueryOperator(
+        task_id='cleanup_zone_earnings',
+        conn_id='tangram_sql',
+        sql="DROP TABLE IF EXISTS iceberg.demo.zone_earnings;",
+    )
+
+    cleanup_driving_stats = SQLExecuteQueryOperator(
+        task_id='cleanup_driving_stats',
+        conn_id='tangram_sql',
+        sql="DROP TABLE IF EXISTS iceberg.demo.day_driving_time_distance;",
+    )
+
+
     # Create a view for rides on the specified day of week
     create_day_rides_table = SQLExecuteQueryOperator(
         task_id='create_day_rides_table',
@@ -81,5 +100,5 @@ with DAG(
         """,
     )
 
-    create_day_rides_table >> [zone_earnings_table, driving_time_distance_table]
+    [cleanup_day_rides, cleanup_zone_earnings, cleanup_driving_stats] >> create_day_rides_table >> [zone_earnings_table, driving_time_distance_table]
     zone_earnings_table >> top_10_zones_query
