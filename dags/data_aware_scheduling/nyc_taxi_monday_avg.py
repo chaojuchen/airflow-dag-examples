@@ -115,5 +115,5 @@ with DAG(
     )
 
     # [cleanup_day_rides, cleanup_zone_earnings, cleanup_driving_stats] >> 
-    create_day_rides_table >> [zone_earnings_table, create_zone_driving_stats_table] >> calculate_zone_driving_metrics >>
-    zone_earnings_table >> top_10_zones_query
+    create_day_rides_table >> zone_earnings_table >> top_10_zones_query
+    create_day_rides_table >> create_zone_driving_stats_table >> calculate_zone_driving_metrics
