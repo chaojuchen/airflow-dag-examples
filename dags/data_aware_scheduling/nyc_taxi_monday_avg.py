@@ -1,5 +1,5 @@
 from airflow import DAG
-from utils import SQLExecuteQueryOperatorWithLineage
+from utils import TangramSQLExecutionOperator
 from datetime import datetime
 
 default_args = {
@@ -14,21 +14,21 @@ with DAG(
     tags=["nyc", "sql", "generic"],
     params={"day_of_week": 1, "tangram_workspace": "demo"},  # Default: 1=Monday, override when triggering DAG
 ) as dag:
-    cleanup_day_rides = SQLExecuteQueryOperatorWithLineage(
+    cleanup_day_rides = TangramSQLExecutionOperator(
         task_id='cleanup_day_rides',
         conn_id='tangram_sql',
         sql="DROP TABLE IF EXISTS iceberg.demo.day_rides;",
         tangram_workspace="{{ params.tangram_workspace }}"
     )
 
-    cleanup_zone_earnings = SQLExecuteQueryOperatorWithLineage(
+    cleanup_zone_earnings = TangramSQLExecutionOperator(
         task_id='cleanup_zone_earnings',
         conn_id='tangram_sql',
         sql="DROP TABLE IF EXISTS iceberg.demo.zone_earnings;",
         tangram_workspace="{{ params.tangram_workspace }}"
     )
 
-    cleanup_zone_driving_stats = SQLExecuteQueryOperatorWithLineage(
+    cleanup_zone_driving_stats = TangramSQLExecutionOperator(
         task_id='cleanup_zone_driving_stats',
         conn_id='tangram_sql',
         sql="DROP TABLE IF EXISTS iceberg.demo.zone_driving_stats;",
@@ -37,7 +37,7 @@ with DAG(
 
 
     # Create a view for rides on the specified day of week
-    create_day_rides_table = SQLExecuteQueryOperatorWithLineage(
+    create_day_rides_table = TangramSQLExecutionOperator(
         task_id='create_day_rides_table',
         conn_id='tangram_sql',
         sql=f"""
@@ -50,7 +50,7 @@ with DAG(
     )
 
     # Create a view for earnings by zone
-    zone_earnings_table = SQLExecuteQueryOperatorWithLineage(
+    zone_earnings_table = TangramSQLExecutionOperator(
         task_id='create_zone_earnings_table',
         conn_id='tangram_sql',
         sql=f"""
@@ -68,7 +68,7 @@ with DAG(
         tangram_workspace="{{ params.tangram_workspace }}",
     )
 
-    create_zone_driving_stats_table = SQLExecuteQueryOperatorWithLineage(
+    create_zone_driving_stats_table = TangramSQLExecutionOperator(
         task_id='create_zone_driving_stats_table',
         conn_id='tangram_sql',
         sql=f"""
@@ -85,7 +85,7 @@ with DAG(
     )
 
     # Branch: Calculate total driving time and distance for the day
-    calculate_zone_driving_metrics = SQLExecuteQueryOperatorWithLineage(
+    calculate_zone_driving_metrics = TangramSQLExecutionOperator(
         task_id='calculate_zone_driving_metrics',
         conn_id='tangram_sql',
         sql=f"""
@@ -107,7 +107,7 @@ with DAG(
     )
 
     # Join with zone names and return the top 10 zones
-    top_10_zones_query = SQLExecuteQueryOperatorWithLineage(
+    top_10_zones_query = TangramSQLExecutionOperator(
         task_id='get_top_10_zones',
         conn_id='tangram_sql',
         sql=f"""
