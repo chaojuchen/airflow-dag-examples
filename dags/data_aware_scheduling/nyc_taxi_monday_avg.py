@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from utils import SQLExecuteQueryOperatorWithLineage
 from datetime import datetime
 
 default_args = {
@@ -14,31 +14,33 @@ with DAG(
     tags=["nyc", "sql", "generic"],
     params={"day_of_week": 1, "tangram_workspace": "demo"},  # Default: 1=Monday, override when triggering DAG
 ) as dag:
-    cleanup_day_rides = SQLExecuteQueryOperator(
+    cleanup_day_rides = SQLExecuteQueryOperatorWithLineage(
         task_id='cleanup_day_rides',
         conn_id='tangram_sql',
         sql="DROP TABLE IF EXISTS iceberg.demo.day_rides;",
+        tangram_workspace="{{ params.tangram_workspace }}"
     )
 
-    cleanup_zone_earnings = SQLExecuteQueryOperator(
+    cleanup_zone_earnings = SQLExecuteQueryOperatorWithLineage(
         task_id='cleanup_zone_earnings',
         conn_id='tangram_sql',
         sql="DROP TABLE IF EXISTS iceberg.demo.zone_earnings;",
+        tangram_workspace="{{ params.tangram_workspace }}"
     )
 
-    cleanup_zone_driving_stats = SQLExecuteQueryOperator(
+    cleanup_zone_driving_stats = SQLExecuteQueryOperatorWithLineage(
         task_id='cleanup_zone_driving_stats',
         conn_id='tangram_sql',
         sql="DROP TABLE IF EXISTS iceberg.demo.zone_driving_stats;",
+        tangram_workspace="{{ params.tangram_workspace }}"
     )
 
 
     # Create a view for rides on the specified day of week
-    create_day_rides_table = SQLExecuteQueryOperator(
+    create_day_rides_table = SQLExecuteQueryOperatorWithLineage(
         task_id='create_day_rides_table',
         conn_id='tangram_sql',
         sql=f"""
-        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{{ params.tangram_workspace }}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         CREATE TABLE IF NOT EXISTS iceberg.demo.day_rides AS
         SELECT *, {{ params.day_of_week }} as day_of_week
         FROM iceberg.demo.nyc_yellow_taxi_trips
@@ -47,7 +49,7 @@ with DAG(
     )
 
     # Create a view for earnings by zone
-    zone_earnings_table = SQLExecuteQueryOperator(
+    zone_earnings_table = SQLExecuteQueryOperatorWithLineage(
         task_id='create_zone_earnings_table',
         conn_id='tangram_sql',
         sql=f"""
@@ -62,13 +64,13 @@ with DAG(
         FROM iceberg.demo.day_rides
         GROUP BY day_of_week, PULocationID;
         """,
+        tangram_workspace="{{ params.tangram_workspace }}",
     )
 
-    create_zone_driving_stats_table = SQLExecuteQueryOperator(
+    create_zone_driving_stats_table = SQLExecuteQueryOperatorWithLineage(
         task_id='create_zone_driving_stats_table',
         conn_id='tangram_sql',
         sql=f"""
-        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{{ params.tangram_workspace }}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_driving_stats (
             day_of_week INT,
             PULocationID INT,
@@ -77,11 +79,12 @@ with DAG(
             avg_distance_per_trip DOUBLE,
             avg_driving_time_minutes DOUBLE
         );
-        """
+        """,
+        tangram_workspace="{{ params.tangram_workspace }}",
     )
 
     # Branch: Calculate total driving time and distance for the day
-    calculate_zone_driving_metrics = SQLExecuteQueryOperator(
+    calculate_zone_driving_metrics = SQLExecuteQueryOperatorWithLineage(
         task_id='calculate_zone_driving_metrics',
         conn_id='tangram_sql',
         sql=f"""
@@ -99,14 +102,14 @@ with DAG(
           ON dr.PULocationID = l.LocationID
         GROUP BY dr.day_of_week, dr.PULocationID, l.zone;
         """,
+        tangram_workspace="{{ params.tangram_workspace }}",
     )
 
     # Join with zone names and return the top 10 zones
-    top_10_zones_query = SQLExecuteQueryOperator(
+    top_10_zones_query = SQLExecuteQueryOperatorWithLineage(
         task_id='get_top_10_zones',
         conn_id='tangram_sql',
         sql=f"""
-        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{{ params.tangram_workspace }}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         SELECT 
             z.PULocationID,
             l.Zone,
@@ -120,6 +123,7 @@ with DAG(
         ORDER BY z.total_earnings DESC
         LIMIT 10;
         """,
+        tangram_workspace="{{ params.tangram_workspace }}",
     )
 
     [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats] >> create_day_rides_table >> [zone_earnings_table, create_zone_driving_stats_table]
