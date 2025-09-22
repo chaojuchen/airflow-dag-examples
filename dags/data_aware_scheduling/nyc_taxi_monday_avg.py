@@ -46,6 +46,7 @@ with DAG(
         FROM iceberg.demo.nyc_yellow_taxi_trips
         WHERE EXTRACT(DOW FROM tpep_pickup_datetime) = {{ params.day_of_week }};
         """,
+        tangram_workspace="{{ params.tangram_workspace }}",
     )
 
     # Create a view for earnings by zone
