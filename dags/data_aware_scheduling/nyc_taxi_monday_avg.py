@@ -56,7 +56,6 @@ with DAG(
         task_id='create_zone_earnings_table',
         conn_id='tangram_sql',
         sql=f"""
-        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{{ params.tangram_workspace }}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_earnings AS
         SELECT
             day_of_week,
@@ -91,7 +90,6 @@ with DAG(
         task_id='calculate_zone_driving_metrics',
         conn_id='tangram_sql',
         sql=f"""
-        -- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{{ params.tangram_workspace }}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}
         INSERT INTO iceberg.demo.zone_driving_stats
         SELECT
             dr.day_of_week,
