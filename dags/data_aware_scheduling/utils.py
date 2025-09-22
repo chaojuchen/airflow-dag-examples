@@ -2,9 +2,9 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 import logging
 
 class TangramSQLExecutionOperator(SQLExecuteQueryOperator):
-    # Only sql needs to be a template field since we concatenate in __init__
+    # Ensure sql is properly templated
     template_fields = SQLExecuteQueryOperator.template_fields
-
+    
     def __init__(self, *args, tangram_workspace, **kwargs):
         # Create the prepend string with Jinja variables
         prepend_str = f'-- {{"job":{{"rn":{{"resourceType":{{"app":{{"group":"org.apache","name":"airflow"}},"name":"TaskInstance"}},"names":["{tangram_workspace}", "{{{{ti.dag_id}}}}","{{{{ti.run_id}}}}","{{{{ti.task_id}}}}"]}}}}}}'
