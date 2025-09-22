@@ -1,4 +1,5 @@
 from airflow import DAG
+from airflow.utils.trigger_rule import TriggerRule
 from utils import TangramSQLExecutionOperator
 from datetime import datetime
 
@@ -47,6 +48,7 @@ with DAG(
         WHERE EXTRACT(DOW FROM tpep_pickup_datetime) = {{ params.day_of_week }};
         """,
         tangram_workspace="{{ params.tangram_workspace }}",
+        trigger_rule=TriggerRule.ALL_DONE,
     )
 
     # Create a view for earnings by zone
