@@ -13,11 +13,11 @@ with DAG(
     schedule=None,
     catchup=False,
     tags=["nyc", "sql", "generic"],
-    params={"day_of_week": 1, "tangram_workspace": "demo"},  # Default: 1=Monday, override when triggering DAG
+    params={"day_of_week": 1, "tangram_workspace": "demo", "conn_id": "tangram_sql"},  # Default: 1=Monday, override when triggering DAG
 ) as dag:
     cleanup_day_rides = TangramSQLExecutionOperator(
         task_id='cleanup_day_rides',
-        conn_id='tangram_sql',
+        conn_id="{{ params.conn_id }}",
         sql="DELETE FROM iceberg.demo.day_rides WHERE day_of_week = {{ params.day_of_week }};",
         retry_on_failure=False,  # Don't retry when the the cleanup operation fails(ex. table doesn't exist)
         tangram_workspace="{{ params.tangram_workspace }}"
@@ -25,7 +25,7 @@ with DAG(
 
     cleanup_zone_earnings = TangramSQLExecutionOperator(
         task_id='cleanup_zone_earnings',
-        conn_id='tangram_sql',
+        conn_id="{{ params.conn_id }}",
         sql="DELETE FROM iceberg.demo.zone_earnings WHERE day_of_week = {{ params.day_of_week }};",
         retry_on_failure=False,
         tangram_workspace="{{ params.tangram_workspace }}"
@@ -33,7 +33,7 @@ with DAG(
 
     cleanup_zone_driving_stats = TangramSQLExecutionOperator(
         task_id='cleanup_zone_driving_stats',
-        conn_id='tangram_sql',
+        conn_id="{{ params.conn_id }}",
         sql="DELETE FROM iceberg.demo.zone_driving_stats WHERE day_of_week = {{ params.day_of_week }};",
         retry_on_failure=False,
         tangram_workspace="{{ params.tangram_workspace }}"
@@ -41,7 +41,7 @@ with DAG(
 
     # cleanup_top_zones = TangramSQLExecutionOperator(
     #     task_id='cleanup_top_zones',
-    #     conn_id='tangram_sql',
+    #     conn_id="{{ params.conn_id }}",
     #     sql="DELETE FROM iceberg.demo.top_zones_by_day WHERE day_of_week = {{ params.day_of_week }};",
     #     retry_on_failure=False,
     #     tangram_workspace="{{ params.tangram_workspace }}"
@@ -50,7 +50,7 @@ with DAG(
     # Create day_rides table schema
     create_day_rides_schema = TangramSQLExecutionOperator(
         task_id='create_day_rides_schema',
-        conn_id='tangram_sql',
+        conn_id="{{ params.conn_id }}",
         sql="""
         CREATE TABLE IF NOT EXISTS iceberg.demo.day_rides (
             VendorID BIGINT,
@@ -81,7 +81,7 @@ with DAG(
     # Insert data into day_rides table
     insert_day_rides_data = TangramSQLExecutionOperator(
         task_id='insert_day_rides_data',
-        conn_id='tangram_sql',
+        conn_id="{{ params.conn_id }}",
         sql="""
         INSERT INTO iceberg.demo.day_rides
         SELECT *, {{ params.day_of_week }} as day_of_week
@@ -94,7 +94,7 @@ with DAG(
 
     create_zone_earnings_schema = TangramSQLExecutionOperator(
         task_id='create_zone_earnings_schema',
-        conn_id='tangram_sql',
+        conn_id="{{ params.conn_id }}",
         sql="""
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_earnings (
             day_of_week INT,
@@ -109,7 +109,7 @@ with DAG(
 
     insert_zone_earnings_data = TangramSQLExecutionOperator(
         task_id='insert_zone_earnings_data',
-        conn_id='tangram_sql',
+        conn_id="{{ params.conn_id }}",
         sql="""
         INSERT INTO iceberg.demo.zone_earnings
         SELECT
@@ -127,7 +127,7 @@ with DAG(
 
     create_zone_driving_stats_table = TangramSQLExecutionOperator(
         task_id='create_zone_driving_stats_table',
-        conn_id='tangram_sql',
+        conn_id="{{ params.conn_id }}",
         sql="""
         CREATE TABLE IF NOT EXISTS iceberg.demo.zone_driving_stats (
             day_of_week INT,
@@ -144,7 +144,7 @@ with DAG(
     # Branch: Calculate total driving time and distance for the day
     insert_zone_driving_metrics = TangramSQLExecutionOperator(
         task_id='insert_zone_driving_metrics',
-        conn_id='tangram_sql',
+        conn_id="{{ params.conn_id }}",
         sql="""
         INSERT INTO iceberg.demo.zone_driving_stats
         SELECT
@@ -165,7 +165,7 @@ with DAG(
 
     # create_top_zones_schema = TangramSQLExecutionOperator(
     #     task_id='create_top_zones_schema',
-    #     conn_id='tangram_sql',
+    #     conn_id="{{ params.conn_id }}",
     #     sql="""
     #     CREATE TABLE IF NOT EXISTS iceberg.demo.top_zones_by_day (
     #         day_of_week INT,
@@ -184,7 +184,7 @@ with DAG(
     # Insert top 10 zones data into dedicated table
     # top_10_zones_query = TangramSQLExecutionOperator(
     # task_id='insert_top_10_zones',
-    # conn_id='tangram_sql',
+    # conn_id="{{ params.conn_id }}",
     #     sql="""
     #     INSERT INTO iceberg.demo.top_zones_by_day
     #     SELECT 
