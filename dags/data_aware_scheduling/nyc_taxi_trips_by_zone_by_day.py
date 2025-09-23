@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.utils.trigger_rule import TriggerRule
+from airflow.utils.task_group import chain
 from utils import TangramSQLExecutionOperator
 from datetime import datetime
 
@@ -211,7 +212,7 @@ with DAG(
     cleanup_tasks = [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats]
     
     # Set up dependencies: schemas → cleanup → data insertion
-    schema_tasks >> cleanup_tasks >> insert_day_rides_data
+    chain(schema_tasks, cleanup_tasks, [insert_day_rides_data])
     
     # Insert data in parallel branches after day_rides data is inserted
     insert_day_rides_data >> insert_zone_earnings_data
