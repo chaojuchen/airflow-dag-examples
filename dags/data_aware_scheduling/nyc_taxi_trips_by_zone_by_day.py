@@ -206,7 +206,7 @@ with DAG(
     #     tangram_workspace="{{ params.tangram_workspace }}",
     # )
 
-    from airflow.models import chain
+    from airflow.utils.helpers import chain
 
     schema_tasks = [create_day_rides_schema, create_zone_earnings_schema, create_zone_driving_stats_table]
     cleanup_tasks = [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats]
