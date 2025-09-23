@@ -207,7 +207,11 @@ with DAG(
     # )
 
     # Create all schemas first to ensure tables exist
-    [create_day_rides_schema, create_zone_earnings_schema, create_zone_driving_stats_table] >> [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats] >> insert_day_rides_data
+    schema_tasks = [create_day_rides_schema, create_zone_earnings_schema, create_zone_driving_stats_table]
+    cleanup_tasks = [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats]
+    
+    # Set up dependencies: schemas → cleanup → data insertion
+    schema_tasks >> cleanup_tasks >> insert_day_rides_data
     
     # Insert data in parallel branches after day_rides data is inserted
     insert_day_rides_data >> insert_zone_earnings_data
