@@ -206,9 +206,9 @@ with DAG(
     #     tangram_workspace="{{ params.tangram_workspace }}",
     # )
 
-    # All cleanup tasks run in parallel first
-    [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats] >> create_day_rides_schema >> insert_day_rides_data
+    # Create all schemas first to ensure tables exist
+    [create_day_rides_schema, create_zone_earnings_schema, create_zone_driving_stats_table] >> [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats] >> insert_day_rides_data
     
-    # Create schemas and insert data in parallel branches after day_rides data is inserted
-    insert_day_rides_data >> create_zone_earnings_schema >> insert_zone_earnings_data
-    insert_day_rides_data >> create_zone_driving_stats_table >> insert_zone_driving_metrics
+    # Insert data in parallel branches after day_rides data is inserted
+    insert_day_rides_data >> insert_zone_earnings_data
+    insert_day_rides_data >> insert_zone_driving_metrics
