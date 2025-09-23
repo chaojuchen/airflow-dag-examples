@@ -39,13 +39,13 @@ with DAG(
         tangram_workspace="{{ params.tangram_workspace }}"
     )
 
-    cleanup_top_zones = TangramSQLExecutionOperator(
-        task_id='cleanup_top_zones',
-        conn_id='tangram_sql',
-        sql="DELETE FROM iceberg.demo.top_zones_by_day WHERE day_of_week = {{ params.day_of_week }};",
-        retry_on_failure=False,
-        tangram_workspace="{{ params.tangram_workspace }}"
-    )
+    # cleanup_top_zones = TangramSQLExecutionOperator(
+    #     task_id='cleanup_top_zones',
+    #     conn_id='tangram_sql',
+    #     sql="DELETE FROM iceberg.demo.top_zones_by_day WHERE day_of_week = {{ params.day_of_week }};",
+    #     retry_on_failure=False,
+    #     tangram_workspace="{{ params.tangram_workspace }}"
+    # )
 
     # Create day_rides table schema
     create_day_rides_schema = TangramSQLExecutionOperator(
@@ -206,6 +206,9 @@ with DAG(
     #     tangram_workspace="{{ params.tangram_workspace }}",
     # )
 
-    [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats, cleanup_top_zones] >> create_day_rides_schema >> insert_day_rides_data >> [create_zone_earnings_schema, create_zone_driving_stats_table]
-    # create_zone_earnings_schema >> insert_zone_earnings_data >> top_10_zones_query
-    create_zone_driving_stats_table >> insert_zone_driving_metrics
+    # All cleanup tasks run in parallel first
+    [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats] >> create_day_rides_schema >> insert_day_rides_data
+    
+    # Create schemas and insert data in parallel branches after day_rides data is inserted
+    insert_day_rides_data >> create_zone_earnings_schema >> insert_zone_earnings_data
+    insert_day_rides_data >> create_zone_driving_stats_table >> insert_zone_driving_metrics
