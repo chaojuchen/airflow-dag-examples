@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.utils.trigger_rule import TriggerRule
 from utils import TangramSQLExecutionOperator
-from datetime import datetime, timedelta
+from datetime import datetime
 
 default_args = {
     'start_date': datetime(2025, 7, 1),
@@ -19,27 +19,24 @@ with DAG(
         task_id='cleanup_day_rides',
         conn_id='tangram_sql',
         sql="DELETE FROM iceberg.demo.day_rides WHERE day_of_week = {{ params.day_of_week }};",
-        tangram_workspace="{{ params.tangram_workspace }}",
-        ignore_table_not_found=True,
-        retry_on_failure=False  # Don't retry cleanup operations
+        retry_on_failure=False,  # Don't retry when the the cleanup operation fails(ex. table doesn't exist)
+        tangram_workspace="{{ params.tangram_workspace }}"
     )
 
     cleanup_zone_earnings = TangramSQLExecutionOperator(
         task_id='cleanup_zone_earnings',
         conn_id='tangram_sql',
         sql="DELETE FROM iceberg.demo.zone_earnings WHERE day_of_week = {{ params.day_of_week }};",
-        tangram_workspace="{{ params.tangram_workspace }}",
-        ignore_table_not_found=True,
-        retries=0,  # Don't retry cleanup operations
-        retry_delay=timedelta(seconds=30)  # If retries were enabled
+        retry_on_failure=False,
+        tangram_workspace="{{ params.tangram_workspace }}"
     )
 
     cleanup_zone_driving_stats = TangramSQLExecutionOperator(
         task_id='cleanup_zone_driving_stats',
         conn_id='tangram_sql',
         sql="DELETE FROM iceberg.demo.zone_driving_stats WHERE day_of_week = {{ params.day_of_week }};",
-        tangram_workspace="{{ params.tangram_workspace }}",
-        ignore_table_not_found=True
+        retry_on_failure=False,
+        tangram_workspace="{{ params.tangram_workspace }}"
     )
 
 
