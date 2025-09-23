@@ -164,47 +164,47 @@ with DAG(
     )
 
     # create_top_zones_schema = TangramSQLExecutionOperator(
-        task_id='create_top_zones_schema',
-        conn_id='tangram_sql',
-        sql="""
-        CREATE TABLE IF NOT EXISTS iceberg.demo.top_zones_by_day (
-            day_of_week INT,
-            PULocationID BIGINT,
-            zone_name STRING,
-            borough STRING,
-            num_trips BIGINT,
-            total_earnings DOUBLE,
-            avg_earnings_per_trip DOUBLE,
-            earnings_rank INT
-        );
-        """,
-        tangram_workspace="{{ params.tangram_workspace }}",
-    )
+    #     task_id='create_top_zones_schema',
+    #     conn_id='tangram_sql',
+    #     sql="""
+    #     CREATE TABLE IF NOT EXISTS iceberg.demo.top_zones_by_day (
+    #         day_of_week INT,
+    #         PULocationID BIGINT,
+    #         zone_name STRING,
+    #         borough STRING,
+    #         num_trips BIGINT,
+    #         total_earnings DOUBLE,
+    #         avg_earnings_per_trip DOUBLE,
+    #         earnings_rank INT
+    #     );
+    #     """,
+    #     tangram_workspace="{{ params.tangram_workspace }}",
+    # )
 
     # Insert top 10 zones data into dedicated table
     # top_10_zones_query = TangramSQLExecutionOperator(
-        task_id='insert_top_10_zones',
-        conn_id='tangram_sql',
-        sql="""
-        INSERT INTO iceberg.demo.top_zones_by_day
-        SELECT 
-            z.day_of_week,
-            z.PULocationID,
-            l.Zone as zone_name,
-            l.Borough as borough,
-            z.num_trips,
-            z.total_earnings,
-            z.avg_earnings_per_trip,
-            ROW_NUMBER() OVER (ORDER BY z.total_earnings DESC) as earnings_rank
-        FROM iceberg.demo.zone_earnings z
-        JOIN iceberg.demo.taxi_zone_lookup l
-          ON z.PULocationID = l.LocationID
-        WHERE z.day_of_week = {{ params.day_of_week }}
-        ORDER BY z.total_earnings DESC
-        LIMIT 10;
-        """,
-        tangram_workspace="{{ params.tangram_workspace }}",
-    )
+    # task_id='insert_top_10_zones',
+    # conn_id='tangram_sql',
+    #     sql="""
+    #     INSERT INTO iceberg.demo.top_zones_by_day
+    #     SELECT 
+    #         z.day_of_week,
+    #         z.PULocationID,
+    #         l.Zone as zone_name,
+    #         l.Borough as borough,
+    #         z.num_trips,
+    #         z.total_earnings,
+    #         z.avg_earnings_per_trip,
+    #         ROW_NUMBER() OVER (ORDER BY z.total_earnings DESC) as earnings_rank
+    #     FROM iceberg.demo.zone_earnings z
+    #     JOIN iceberg.demo.taxi_zone_lookup l
+    #       ON z.PULocationID = l.LocationID
+    #     WHERE z.day_of_week = {{ params.day_of_week }}
+    #     ORDER BY z.total_earnings DESC
+    #     LIMIT 10;
+    #     """,
+    #     tangram_workspace="{{ params.tangram_workspace }}",
+    # )
 
     [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats, cleanup_top_zones] >> create_day_rides_schema >> insert_day_rides_data >> [create_zone_earnings_schema, create_zone_driving_stats_table, create_top_zones_schema]
     # create_zone_earnings_schema >> insert_zone_earnings_data >> top_10_zones_query
