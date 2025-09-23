@@ -206,6 +206,6 @@ with DAG(
     #     tangram_workspace="{{ params.tangram_workspace }}",
     # )
 
-    [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats, cleanup_top_zones] >> create_day_rides_schema >> insert_day_rides_data >> [create_zone_earnings_schema, create_zone_driving_stats_table, create_top_zones_schema]
+    [cleanup_day_rides, cleanup_zone_earnings, cleanup_zone_driving_stats, cleanup_top_zones] >> create_day_rides_schema >> insert_day_rides_data >> [create_zone_earnings_schema, create_zone_driving_stats_table]
     # create_zone_earnings_schema >> insert_zone_earnings_data >> top_10_zones_query
     create_zone_driving_stats_table >> insert_zone_driving_metrics
