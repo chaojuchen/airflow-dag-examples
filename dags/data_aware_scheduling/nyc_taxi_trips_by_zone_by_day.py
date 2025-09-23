@@ -8,7 +8,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='nyc_day_zone_earnings',
+    dag_id='nyc_taxi_daily_zone_metrics',
     default_args=default_args,
     schedule=None,
     catchup=False,
